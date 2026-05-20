@@ -7,13 +7,13 @@
 //     { rules: { .read: true, .write: true } }
 // ============================================================
 const firebaseConfig = {
-  apiKey:            'YOUR_API_KEY',
-  authDomain:        'YOUR_PROJECT_ID.firebaseapp.com',
-  databaseURL:       'https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId:         'YOUR_PROJECT_ID',
-  storageBucket:     'YOUR_PROJECT_ID.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId:             'YOUR_APP_ID',
+  apiKey:            'AIzaSyCbrHqIAUHYotq6eygL9LwACfW9net6RXQ',
+  authDomain:        'antri-mas-ari.firebaseapp.com',
+  databaseURL:       'https://antri-mas-ari-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:         'antri-mas-ari',
+  storageBucket:     'antri-mas-ari.firebasestorage.app',
+  messagingSenderId: '762311648576',
+  appId:             '1:762311648576:web:c3af752797f89d1bf186a5',
 };
 
 // ===== Init Firebase =====

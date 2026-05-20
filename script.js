@@ -19,9 +19,11 @@ const rootRef = db.ref(ROOT);
 
 const FIXED_SERVICE = { name: "Konsultasi QA – Mas Ari", prefix: "A" };
 const MY_TICKET_KEY = "myTicket_masAri";
+const ADMIN_PIN = "1234"; // ganti PIN sesuai keinginan
 
 let liveState = null;
 let currentTab = "all";
+let adminUnlocked = false;
 
 function getToday() {
   return new Date().toLocaleDateString("id-ID", {
@@ -157,8 +159,49 @@ function printTicket() {
   window.print();
 }
 
+// ===== PIN / Admin Auth =====
+function openPinModal() {
+  document.getElementById("pinInput").value = "";
+  document.getElementById("pinError").textContent = "";
+  document.getElementById("pinOverlay").classList.add("open");
+  setTimeout(function () {
+    document.getElementById("pinInput").focus();
+  }, 100);
+}
+
+function closePinModal(e) {
+  if (e && e.target !== document.getElementById("pinOverlay")) return;
+  document.getElementById("pinOverlay").classList.remove("open");
+}
+
+function submitPin() {
+  var entered = document.getElementById("pinInput").value;
+  if (entered === ADMIN_PIN) {
+    adminUnlocked = true;
+    document.getElementById("pinOverlay").classList.remove("open");
+    document.getElementById("adminLocked").style.display = "none";
+    document.getElementById("adminUnlockedBar").style.display = "flex";
+    showToast("Panel berhasil dibuka.", "success");
+  } else {
+    document.getElementById("pinError").textContent = "PIN salah, coba lagi.";
+    document.getElementById("pinInput").value = "";
+    document.getElementById("pinInput").focus();
+  }
+}
+
+function lockAdmin() {
+  adminUnlocked = false;
+  document.getElementById("adminLocked").style.display = "flex";
+  document.getElementById("adminUnlockedBar").style.display = "none";
+}
+
 // ===== Admin: Call Next =====
 function callNext() {
+  if (!adminUnlocked) {
+    openPinModal();
+    return;
+  }
+  if (!liveState) return;
   var queues = Object.entries(liveState.queues || {})
     .map(function (kv) {
       return Object.assign({}, kv[1], { fbKey: kv[0] });
@@ -173,6 +216,10 @@ function callNext() {
   if (liveState.currentServing && liveState.currentServing.fbKey) {
     updates[ROOT + "/queues/" + liveState.currentServing.fbKey + "/status"] =
       "done";
+  }
+  if (!next) {
+    showToast("Tidak ada antrian yang menunggu.", "warning");
+    return;
   }
   updates[ROOT + "/queues/" + next.fbKey + "/status"] = "serving";
   updates[ROOT + "/currentServing"] = Object.assign({}, next, {
@@ -190,6 +237,14 @@ function callNext() {
 }
 
 function recallCurrent() {
+  if (!adminUnlocked) {
+    openPinModal();
+    return;
+  }
+  if (!liveState || !liveState.currentServing) {
+    showToast("Tidak ada antrian yang sedang dilayani.", "warning");
+    return;
+  }
   showToast(
     "Memanggil ulang nomor " +
       liveState.currentServing.id +
@@ -201,6 +256,11 @@ function recallCurrent() {
 }
 
 function resetQueue() {
+  if (!adminUnlocked) {
+    openPinModal();
+    return;
+  }
+  if (!window.confirm("Reset semua antrian hari ini?")) return;
   rootRef
     .set({
       date: getToday(),

@@ -141,9 +141,39 @@
       </section>
     </main>
 
+    <!-- PIN Modal -->
+    <div class="pin-overlay" id="pinOverlay" onclick="closePinModal(event)">
+      <div class="pin-modal">
+        <div class="pin-title">🔐 Panel Mas Ari</div>
+        <div class="pin-subtitle">Masukkan PIN untuk melanjutkan</div>
+        <input
+          class="pin-input"
+          id="pinInput"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••"
+          onkeydown="if (event.key === 'Enter') submitPin();"
+        />
+        <div class="pin-error" id="pinError"></div>
+        <div class="pin-actions">
+          <button class="btn btn-outline" onclick="closePinModal()">
+            Batal
+          </button>
+          <button class="btn btn-primary" onclick="submitPin()">Masuk</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Panel (bottom fixed bar) -->
     <div class="admin-bar">
-      <div class="admin-inner">
+      <div class="admin-inner" id="adminLocked">
+        <span class="admin-label">Panel Mas Ari</span>
+        <button class="btn btn-outline-light" onclick="openPinModal()">
+          🔒 Buka Panel
+        </button>
+      </div>
+      <div class="admin-inner" id="adminUnlockedBar" style="display: none">
         <span class="admin-label">Panel Mas Ari</span>
         <button class="btn btn-success" onclick="callNext()">
           ▶ Panggil Berikutnya
@@ -154,6 +184,7 @@
         <button class="btn btn-outline-light" onclick="resetQueue()">
           ↺ Reset Antrian
         </button>
+        <button class="btn btn-outline-light" onclick="lockAdmin()">🔒</button>
       </div>
     </div>
 

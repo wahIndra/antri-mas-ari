@@ -423,8 +423,64 @@ main {
   .btn { padding: 8px 12px; font-size: .82rem; }
 }
 
+/* ===== PIN Modal ===== */
+.pin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.pin-overlay.open { display: flex; }
+
+.pin-modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: popIn .25s ease;
+}
+
+.pin-title    { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+.pin-subtitle { font-size: .875rem; color: var(--gray-600); margin-bottom: 20px; }
+
+.pin-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.6rem;
+  letter-spacing: .4em;
+  text-align: center;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.pin-input:focus { border-color: var(--primary); }
+
+.pin-error {
+  min-height: 20px;
+  font-size: .8rem;
+  color: var(--danger);
+  margin: 8px 0 4px;
+}
+
+.pin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
 @media print {
   header, .form-section, .queue-list-section, .admin-bar, .ticket-actions { display: none; }
   .ticket-section { display: flex !important; }
   body { background: white; }
 }
+

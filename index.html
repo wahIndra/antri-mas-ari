@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Antrian – Mas Ari (QA Lead)</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <div class="header-inner">
+        <div class="header-icon">👨‍💻</div>
+        <div>
+          <h1>Antrian Konsultasi QA</h1>
+          <p>
+            Ambil nomor antrian untuk bertemu <strong>Mas Ari – QA Lead</strong>
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Status Panel -->
+      <section class="status-panel">
+        <div class="status-card current">
+          <div class="status-label">Sedang Dilayani</div>
+          <div class="status-number" id="currentNumber">-</div>
+        </div>
+        <div class="status-card waiting">
+          <div class="status-label">Menunggu</div>
+          <div class="status-number" id="waitingCount">0</div>
+          <div class="status-sub">orang</div>
+        </div>
+        <div class="status-card total">
+          <div class="status-label">Total Hari Ini</div>
+          <div class="status-number" id="totalCount">0</div>
+          <div class="status-sub">antrian</div>
+        </div>
+      </section>
+
+      <!-- Ticket Display (shown after taking a number) -->
+      <section class="ticket-section" id="ticketSection" style="display: none">
+        <div class="ticket">
+          <div class="ticket-header">TIKET ANTRIAN ANDA</div>
+          <div class="ticket-number" id="ticketNumber">A001</div>
+          <div class="ticket-info">
+            <div class="ticket-row">
+              <span>Layanan</span>
+              <span id="ticketService">-</span>
+            </div>
+            <div class="ticket-row">
+              <span>Waktu Ambil</span>
+              <span id="ticketTime">-</span>
+            </div>
+            <div class="ticket-row">
+              <span>Estimasi Tunggu</span>
+              <span id="ticketEstimate">-</span>
+            </div>
+          </div>
+          <div class="ticket-note">
+            Harap tunggu hingga nomor Anda dipanggil
+          </div>
+          <div class="ticket-actions">
+            <button class="btn btn-outline" onclick="printTicket()">
+              🖨️ Cetak Tiket
+            </button>
+            <button class="btn btn-danger" onclick="cancelTicket()">
+              ✕ Batalkan
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Take Queue Form -->
+      <section class="form-section" id="formSection">
+        <div class="qa-lead-profile">
+          <div class="qa-lead-avatar">👨‍💻</div>
+          <div>
+            <div class="qa-lead-name">Mas Ari</div>
+            <div class="qa-lead-title">QA Lead</div>
+          </div>
+        </div>
+
+        <h2>Ambil Nomor Antrian</h2>
+        <p class="form-desc">
+          Masukkan nama Anda untuk mendapatkan nomor antrian
+        </p>
+
+        <div class="name-input-group">
+          <label for="patientName">Nama Anda</label>
+          <input
+            type="text"
+            id="patientName"
+            placeholder="Masukkan nama Anda..."
+            maxlength="50"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary btn-large"
+          id="takeBtn"
+          onclick="takeQueue()"
+        >
+          Ambil Nomor Antrian
+        </button>
+      </section>
+
+      <!-- Queue List -->
+      <section class="queue-list-section">
+        <h2>Daftar Antrian</h2>
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(this, 'all')">
+            Semua
+          </button>
+          <button class="tab" onclick="switchTab(this, 'waiting')">
+            Menunggu
+          </button>
+          <button class="tab" onclick="switchTab(this, 'done')">Selesai</button>
+        </div>
+        <div class="queue-table-wrapper">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>No. Antrian</th>
+                <th>Nama</th>
+                <th>Waktu</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="queueTableBody">
+              <tr class="empty-row">
+                <td colspan="4">Belum ada antrian hari ini</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Admin Panel (bottom fixed bar) -->
+    <div class="admin-bar">
+      <div class="admin-inner">
+        <span class="admin-label">Panel Mas Ari</span>
+        <button class="btn btn-success" onclick="callNext()">
+          ▶ Panggil Berikutnya
+        </button>
+        <button class="btn btn-warning" onclick="recallCurrent()">
+          🔔 Panggil Ulang
+        </button>
+        <button class="btn btn-outline-light" onclick="resetQueue()">
+          ↺ Reset Antrian
+        </button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -493,6 +493,21 @@ main {
 }
 
 .payment-card h2  { font-size: 1.2rem; margin-bottom: 6px; }
+
+.payment-amount-display {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 8px 0 4px;
+  letter-spacing: -.02em;
+}
+
+.payment-merchant-info {
+  font-size: .85rem;
+  color: var(--gray-500, #6b7280);
+  margin-bottom: 10px;
+}
+
 .payment-desc     { font-size: .875rem; color: var(--gray-600); margin-bottom: 18px; }
 
 .payment-qr-wrap {

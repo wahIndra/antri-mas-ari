@@ -105,10 +105,13 @@
         style="display: none"
       >
         <div class="payment-card">
-          <div class="payment-badge">💳 Pembayaran</div>
+          <div class="payment-badge">💳 Pembayaran GoPay</div>
           <h2 id="paymentTitle">Scan untuk Membayar</h2>
+          <div class="payment-amount-display" id="paymentAmountDisplay">
+            Rp 5.000
+          </div>
           <p class="payment-desc">
-            Scan QR code di bawah menggunakan aplikasi pembayaran Anda
+            Scan QR di bawah menggunakan aplikasi GoPay / QRIS
           </p>
           <div class="payment-qr-wrap">
             <img id="paymentQRImage" src="" alt="QR Code Pembayaran" />
@@ -256,12 +259,28 @@
             maxlength="60"
             placeholder="Konsultasi QA – Mas Ari"
           />
-          <label>Gambar QR Pembayaran</label>
+          <label
+            >Nomor Merchant (internal, tidak ditampilkan ke pengguna)</label
+          >
+          <input
+            type="tel"
+            id="setPaymentMerchant"
+            maxlength="20"
+            placeholder="085349494794"
+          />
+          <label>Nominal Pembayaran — ditampilkan di layar (Rp)</label>
+          <input
+            type="number"
+            id="setPaymentAmount"
+            min="0"
+            placeholder="5000"
+          />
+          <label>Gambar QR dari GoPay Merchant (path atau URL)</label>
           <input
             type="text"
             id="setPaymentQR"
             maxlength="500"
-            placeholder="QRANTRI.jpg atau https://... (kosongkan jika tidak pakai)"
+            placeholder="QRANTRI.jpg atau https://..."
           />
         </div>
         <div class="pin-actions">
@@ -275,33 +294,54 @@
       </div>
     </div>
 
-    <!-- PIN Modal -->
+    <!-- PIN / Admin Payment Modal -->
     <div class="pin-overlay" id="pinOverlay" onclick="closePinModal(event)">
       <div class="pin-modal">
-        <div class="pin-title">🔐 Panel Admin</div>
-        <div class="pin-subtitle">Masukkan PIN atau scan QR di bawah</div>
-        <input
-          class="pin-input"
-          id="pinInput"
-          type="password"
-          inputmode="numeric"
-          maxlength="6"
-          placeholder="••••"
-          onkeydown="if (event.key === 'Enter') submitPin();"
-        />
-        <div class="pin-error" id="pinError"></div>
+        <div class="pin-title">🔐 Buka Panel Admin</div>
+        <div class="pin-subtitle">
+          Selesaikan pembayaran untuk membuka panel
+        </div>
+
+        <!-- GoPay QR (primary) -->
+        <div class="admin-pay-amount" id="adminPayAmount">Rp 5.000</div>
+        <div class="admin-qr-wrap">
+          <img id="adminQRImage" src="" alt="QR Pembayaran Admin" />
+        </div>
+        <p class="admin-qr-note">Scan QR di atas lalu klik konfirmasi</p>
+
         <div class="pin-actions">
           <button class="btn btn-outline" onclick="closePinModal()">
             Batal
           </button>
-          <button class="btn btn-primary" onclick="submitPin()">Masuk</button>
+          <button class="btn btn-primary" onclick="confirmAdminPayment()">
+            ✓ Sudah Bayar – Buka Panel
+          </button>
         </div>
-        <div class="admin-qr-divider"><span>atau buka dengan QR</span></div>
-        <div class="admin-qr-wrap">
-          <img id="adminQRImage" src="" alt="QR Admin" />
-          <p class="admin-qr-note">
-            Scan QR ini dari HP untuk buka panel admin
-          </p>
+
+        <!-- Emergency PIN fallback (hidden) -->
+        <div class="pin-fallback">
+          <button class="pin-fallback-link" onclick="togglePinFallback()">
+            Gunakan PIN →
+          </button>
+        </div>
+        <div id="pinFallbackSection" style="display: none">
+          <input
+            class="pin-input"
+            id="pinInput"
+            type="password"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="••••"
+            onkeydown="if (event.key === 'Enter') submitPin();"
+          />
+          <div class="pin-error" id="pinError"></div>
+          <button
+            class="btn btn-primary"
+            style="margin-top: 8px; width: 100%"
+            onclick="submitPin()"
+          >
+            Masuk dengan PIN
+          </button>
         </div>
       </div>
     </div>

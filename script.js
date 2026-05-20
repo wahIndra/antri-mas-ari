@@ -26,7 +26,9 @@ let liveState = null;
 let currentTab = "all";
 let adminUnlocked = false;
 let currentServiceName = FIXED_SERVICE.name;
-let currentPaymentQRUrl = "";
+let currentPaymentQRUrl = "QRANTRI.jpg"; // merchant-provided GoPay QR image
+let currentPaymentMerchant = "085349494794";
+let currentPaymentAmount = 5000;
 let pendingName = "";
 let pendingPhone = "";
 
@@ -108,6 +110,9 @@ function requestQueue() {
     pendingName = name;
     pendingPhone = phone;
     document.getElementById("paymentQRImage").src = currentPaymentQRUrl;
+    // Update amount display (merchant number hidden from users)
+    var fmt = currentPaymentAmount.toLocaleString("id-ID");
+    document.getElementById("paymentAmountDisplay").textContent = "Rp " + fmt;
     document.getElementById("formSection").style.display = "none";
     document.getElementById("paymentSection").style.display = "flex";
   } else {
@@ -233,16 +238,36 @@ function printTicket() {
 function openPinModal() {
   document.getElementById("pinInput").value = "";
   document.getElementById("pinError").textContent = "";
-  document.getElementById("adminQRImage").src = "QRANTRI.jpg";
+  document.getElementById("pinFallbackSection").style.display = "none";
+  // Show the merchant-provided GoPay QR image + amount
+  document.getElementById("adminQRImage").src =
+    currentPaymentQRUrl || "QRANTRI.jpg";
+  document.getElementById("adminPayAmount").textContent =
+    "Rp " + currentPaymentAmount.toLocaleString("id-ID");
   document.getElementById("pinOverlay").classList.add("open");
-  setTimeout(function () {
-    document.getElementById("pinInput").focus();
-  }, 100);
 }
 
 function closePinModal(e) {
   if (e && e.target !== document.getElementById("pinOverlay")) return;
   document.getElementById("pinOverlay").classList.remove("open");
+}
+
+function confirmAdminPayment() {
+  adminUnlocked = true;
+  document.getElementById("pinOverlay").classList.remove("open");
+  document.getElementById("adminLocked").style.display = "none";
+  document.getElementById("adminUnlockedBar").style.display = "flex";
+  showToast("Panel berhasil dibuka. 🔓", "success");
+}
+
+function togglePinFallback() {
+  var sec = document.getElementById("pinFallbackSection");
+  sec.style.display = sec.style.display === "none" ? "block" : "none";
+  if (sec.style.display === "block") {
+    setTimeout(function () {
+      document.getElementById("pinInput").focus();
+    }, 50);
+  }
 }
 
 function submitPin() {
@@ -270,13 +295,10 @@ function lockAdmin() {
 function applySettings(s) {
   s = s || {};
   currentServiceName = s.serviceName || FIXED_SERVICE.name;
-  // Default to local QRANTRI.jpg; admin can override or clear in settings
-  currentPaymentQRUrl =
-    s.paymentQRUrl !== undefined &&
-    s.paymentQRUrl !== null &&
-    s.paymentQRUrl !== ""
-      ? s.paymentQRUrl
-      : "QRANTRI.jpg";
+  currentPaymentMerchant = s.paymentMerchant || "085349494794";
+  currentPaymentAmount = s.paymentAmount || 5000;
+  // QR image is provided by the merchant (GoPay QRIS) — we just display it
+  currentPaymentQRUrl = s.paymentQRUrl || "QRANTRI.jpg";
   var el;
   el = document.getElementById("headerTitle");
   if (el) el.textContent = s.headerTitle || "";
@@ -306,6 +328,9 @@ function openSettingsModal() {
       s.profileTitle || "QA Lead";
     document.getElementById("setServiceName").value =
       s.serviceName || currentServiceName;
+    document.getElementById("setPaymentMerchant").value =
+      s.paymentMerchant || "085349494794";
+    document.getElementById("setPaymentAmount").value = s.paymentAmount || 5000;
     document.getElementById("setPaymentQR").value = s.paymentQRUrl || "";
     document.getElementById("settingsOverlay").classList.add("open");
   });
@@ -331,7 +356,11 @@ function saveSettings() {
     serviceName:
       document.getElementById("setServiceName").value.trim() ||
       currentServiceName,
-    paymentQRUrl: document.getElementById("setPaymentQR").value.trim(),
+    paymentQRUrl:
+      document.getElementById("setPaymentQR").value.trim() || "QRANTRI.jpg",
+    paymentAmount:
+      parseInt(document.getElementById("setPaymentAmount").value, 10) || 5000,
+    paymentMerchant: document.getElementById("setPaymentMerchant").value.trim(),
     pageTitle:
       document.getElementById("setHeaderTitle").value.trim() ||
       "Antrian Konsultasi QA",

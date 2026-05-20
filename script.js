@@ -19,7 +19,6 @@ const rootRef = db.ref(ROOT);
 
 const FIXED_SERVICE = { name: "Konsultasi QA – Mas Ari", prefix: "A" };
 const MY_TICKET_KEY = "myTicket_masAri";
-const ADMIN_PIN = "1357";
 const settingsRef = db.ref(ROOT + "/settings");
 
 let liveState = null;
@@ -311,18 +310,30 @@ function togglePinFallback() {
   }
 }
 
-function submitPin() {
+async function submitPin() {
   var entered = document.getElementById("pinInput").value;
-  if (entered === ADMIN_PIN) {
-    adminUnlocked = true;
-    document.getElementById("pinOverlay").classList.remove("open");
-    document.getElementById("adminLocked").style.display = "none";
-    document.getElementById("adminUnlockedBar").style.display = "flex";
-    showToast("Panel berhasil dibuka.", "success");
-  } else {
-    document.getElementById("pinError").textContent = "PIN salah, coba lagi.";
-    document.getElementById("pinInput").value = "";
-    document.getElementById("pinInput").focus();
+  var errEl = document.getElementById("pinError");
+  errEl.textContent = "";
+  try {
+    var resp = await fetch("/api/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: entered }),
+    });
+    var data = await resp.json();
+    if (data.ok) {
+      adminUnlocked = true;
+      document.getElementById("pinOverlay").classList.remove("open");
+      document.getElementById("adminLocked").style.display = "none";
+      document.getElementById("adminUnlockedBar").style.display = "flex";
+      showToast("Panel berhasil dibuka.", "success");
+    } else {
+      errEl.textContent = "PIN salah, coba lagi.";
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinInput").focus();
+    }
+  } catch (e) {
+    errEl.textContent = "Gagal memverifikasi, coba lagi.";
   }
 }
 
@@ -708,10 +719,18 @@ function checkMyTicketStatus() {
 
 // ===== Bootstrap =====
 // Auto-unlock admin if URL contains valid ?adminKey=
-(function () {
+(async function () {
   try {
     var params = new URLSearchParams(window.location.search);
-    if (params.get("adminKey") === ADMIN_PIN) {
+    var key = params.get("adminKey");
+    if (!key) return;
+    var resp = await fetch("/api/verify-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: key }),
+    });
+    var data = await resp.json();
+    if (data.ok) {
       window.history.replaceState({}, "", window.location.pathname);
       adminUnlocked = true;
       document.getElementById("adminLocked").style.display = "none";
@@ -719,7 +738,7 @@ function checkMyTicketStatus() {
       showToast("Panel admin dibuka via QR. 🔓", "success");
     }
   } catch (e) {
-    /* URLSearchParams not supported in very old browsers */
+    /* ignore */
   }
 })();
 document.getElementById("queueTableBody").innerHTML =

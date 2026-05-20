@@ -579,6 +579,17 @@ function renderQueueTable() {
 function checkMyTicketStatus() {
   var myTicket = getMyTicket();
   if (!myTicket || !liveState) return;
+
+  // Safety net: localStorage was marked done but ticket section still visible
+  if (myTicket.status === "done") {
+    saveMyTicket(null);
+    document.getElementById("ticketSection").style.display = "none";
+    document.getElementById("formSection").style.display = "block";
+    document.getElementById("patientName").value = "";
+    document.getElementById("patientPhone").value = "";
+    return;
+  }
+
   // Use fbKey for exact match — prevents stale ticket after reset/new A001 by someone else
   var entry = myTicket.fbKey
     ? (liveState.queues || {})[myTicket.fbKey]
@@ -667,13 +678,18 @@ rootRef
     } else {
       var myTicket = getMyTicket();
       if (myTicket) {
-        var stillExists = Object.values(data.queues || {}).some(function (q) {
-          return q.id === myTicket.id;
-        });
-        if (stillExists) {
-          showTicket(myTicket);
+        // Use fbKey for exact lookup; fall back to id-match for old tickets without fbKey
+        var storedEntry = myTicket.fbKey
+          ? (data.queues || {})[myTicket.fbKey]
+          : Object.values(data.queues || {}).find(function (q) {
+              return q.id === myTicket.id;
+            });
+        if (storedEntry && storedEntry.status !== "done") {
+          showTicket(storedEntry);
           document.getElementById("formSection").style.display = "none";
-        } else saveMyTicket(null);
+        } else {
+          saveMyTicket(null); // not found or already served — clear
+        }
       }
     }
     rootRef.on("value", function (snapshot) {

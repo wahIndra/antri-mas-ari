@@ -19,11 +19,13 @@ const rootRef = db.ref(ROOT);
 
 const FIXED_SERVICE = { name: "Konsultasi QA – Mas Ari", prefix: "A" };
 const MY_TICKET_KEY = "myTicket_masAri";
-const ADMIN_PIN = "1234"; // ganti PIN sesuai keinginan
+const ADMIN_PIN = "1357";
+const settingsRef = db.ref(ROOT + "/settings");
 
 let liveState = null;
 let currentTab = "all";
 let adminUnlocked = false;
+let currentServiceName = FIXED_SERVICE.name;
 
 function getToday() {
   return new Date().toLocaleDateString("id-ID", {
@@ -195,6 +197,79 @@ function lockAdmin() {
   document.getElementById("adminUnlockedBar").style.display = "none";
 }
 
+// ===== Settings =====
+function applySettings(s) {
+  if (!s) return;
+  currentServiceName = s.serviceName || FIXED_SERVICE.name;
+  var el;
+  el = document.getElementById("headerTitle");
+  if (el) el.textContent = s.headerTitle || "";
+  el = document.getElementById("headerSubtitle");
+  if (el) el.textContent = s.headerSubtitle || "";
+  el = document.getElementById("profileName");
+  if (el) el.textContent = s.profileName || "";
+  el = document.getElementById("profileTitle");
+  if (el) el.textContent = s.profileTitle || "";
+  if (s.pageTitle) document.title = s.pageTitle;
+}
+
+function openSettingsModal() {
+  if (!adminUnlocked) {
+    openPinModal();
+    return;
+  }
+  settingsRef.once("value").then(function (snap) {
+    var s = snap.val() || {};
+    document.getElementById("setHeaderTitle").value =
+      s.headerTitle || "Antrian Konsultasi QA";
+    document.getElementById("setHeaderSubtitle").value =
+      s.headerSubtitle || "Mas Ari \u2013 QA Lead";
+    document.getElementById("setProfileName").value =
+      s.profileName || "Mas Ari";
+    document.getElementById("setProfileTitle").value =
+      s.profileTitle || "QA Lead";
+    document.getElementById("setServiceName").value =
+      s.serviceName || currentServiceName;
+    document.getElementById("settingsOverlay").classList.add("open");
+  });
+}
+
+function closeSettingsModal(e) {
+  if (e && e.target !== document.getElementById("settingsOverlay")) return;
+  document.getElementById("settingsOverlay").classList.remove("open");
+}
+
+function saveSettings() {
+  var s = {
+    headerTitle:
+      document.getElementById("setHeaderTitle").value.trim() ||
+      "Antrian Konsultasi QA",
+    headerSubtitle:
+      document.getElementById("setHeaderSubtitle").value.trim() ||
+      "Mas Ari \u2013 QA Lead",
+    profileName:
+      document.getElementById("setProfileName").value.trim() || "Mas Ari",
+    profileTitle:
+      document.getElementById("setProfileTitle").value.trim() || "QA Lead",
+    serviceName:
+      document.getElementById("setServiceName").value.trim() ||
+      currentServiceName,
+    pageTitle:
+      document.getElementById("setHeaderTitle").value.trim() ||
+      "Antrian Konsultasi QA",
+  };
+  settingsRef
+    .set(s)
+    .then(function () {
+      applySettings(s);
+      document.getElementById("settingsOverlay").classList.remove("open");
+      showToast("Pengaturan berhasil disimpan.", "success");
+    })
+    .catch(function () {
+      showToast("Gagal menyimpan pengaturan.", "error");
+    });
+}
+
 // ===== Admin: Call Next =====
 function callNext() {
   if (!adminUnlocked) {
@@ -343,9 +418,13 @@ function renderQueueTable() {
     rows = rows.filter(function (q) {
       return q.status === "waiting";
     });
+  if (currentTab === "serving")
+    rows = rows.filter(function (q) {
+      return q.status === "serving";
+    });
   if (currentTab === "done")
     rows = rows.filter(function (q) {
-      return q.status === "done" || q.status === "serving";
+      return q.status === "done";
     });
   if (rows.length === 0) {
     tbody.innerHTML =
@@ -402,6 +481,14 @@ function checkMyTicketStatus() {
 // ===== Bootstrap =====
 document.getElementById("queueTableBody").innerHTML =
   '<tr class="empty-row"><td colspan="4">Menghubungkan ke server...</td></tr>';
+
+// Load settings first, then queue data
+settingsRef.once("value").then(function (snap) {
+  applySettings(snap.val());
+});
+settingsRef.on("value", function (snap) {
+  applySettings(snap.val());
+});
 
 rootRef
   .once("value")

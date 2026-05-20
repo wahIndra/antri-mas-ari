@@ -15,9 +15,10 @@
       <div class="header-inner">
         <div class="header-icon">👨‍💻</div>
         <div>
-          <h1>Antrian Konsultasi QA</h1>
+          <h1 id="headerTitle">Antrian Konsultasi QA</h1>
           <p>
-            Ambil nomor antrian untuk bertemu <strong>Mas Ari – QA Lead</strong>
+            Ambil nomor antrian untuk bertemu
+            <strong id="headerSubtitle">Mas Ari – QA Lead</strong>
           </p>
         </div>
       </div>
@@ -80,8 +81,8 @@
         <div class="qa-lead-profile">
           <div class="qa-lead-avatar">👨‍💻</div>
           <div>
-            <div class="qa-lead-name">Mas Ari</div>
-            <div class="qa-lead-title">QA Lead</div>
+            <div class="qa-lead-name" id="profileName">Mas Ari</div>
+            <div class="qa-lead-title" id="profileTitle">QA Lead</div>
           </div>
         </div>
 
@@ -119,6 +120,9 @@
           <button class="tab" onclick="switchTab(this, 'waiting')">
             Menunggu
           </button>
+          <button class="tab" onclick="switchTab(this, 'serving')">
+            Dipanggil
+          </button>
           <button class="tab" onclick="switchTab(this, 'done')">Selesai</button>
         </div>
         <div class="queue-table-wrapper">
@@ -141,10 +145,67 @@
       </section>
     </main>
 
+    <!-- Settings Modal -->
+    <div
+      class="pin-overlay"
+      id="settingsOverlay"
+      onclick="closeSettingsModal(event)"
+    >
+      <div class="pin-modal" style="max-width: 420px">
+        <div class="pin-title">⚙️ Pengaturan Panel</div>
+        <div class="pin-subtitle">Sesuaikan tampilan aplikasi</div>
+        <div class="settings-fields">
+          <label>Judul Header</label>
+          <input
+            type="text"
+            id="setHeaderTitle"
+            maxlength="60"
+            placeholder="Antrian Konsultasi QA"
+          />
+          <label>Subtitle (nama &amp; jabatan)</label>
+          <input
+            type="text"
+            id="setHeaderSubtitle"
+            maxlength="60"
+            placeholder="Mas Ari – QA Lead"
+          />
+          <label>Nama di Kartu Profil</label>
+          <input
+            type="text"
+            id="setProfileName"
+            maxlength="40"
+            placeholder="Mas Ari"
+          />
+          <label>Jabatan di Kartu Profil</label>
+          <input
+            type="text"
+            id="setProfileTitle"
+            maxlength="40"
+            placeholder="QA Lead"
+          />
+          <label>Nama Layanan (di tiket)</label>
+          <input
+            type="text"
+            id="setServiceName"
+            maxlength="60"
+            placeholder="Konsultasi QA – Mas Ari"
+          />
+        </div>
+        <div class="pin-actions">
+          <button class="btn btn-outline" onclick="closeSettingsModal()">
+            Batal
+          </button>
+          <button class="btn btn-primary" onclick="saveSettings()">
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- PIN Modal -->
     <div class="pin-overlay" id="pinOverlay" onclick="closePinModal(event)">
       <div class="pin-modal">
-        <div class="pin-title">🔐 Panel Mas Ari</div>
+        <div class="pin-title">🔐 Panel Admin</div>
         <div class="pin-subtitle">Masukkan PIN untuk melanjutkan</div>
         <input
           class="pin-input"
@@ -183,6 +244,9 @@
         </button>
         <button class="btn btn-outline-light" onclick="resetQueue()">
           ↺ Reset Antrian
+        </button>
+        <button class="btn btn-outline-light" onclick="openSettingsModal()">
+          ⚙️
         </button>
         <button class="btn btn-outline-light" onclick="lockAdmin()">🔒</button>
       </div>

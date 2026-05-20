@@ -478,6 +478,36 @@ main {
   justify-content: center;
 }
 
+/* ===== Settings Fields ===== */
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.settings-fields label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-top: 8px;
+}
+
+.settings-fields input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.settings-fields input:focus { border-color: var(--primary); }
+
 @media print {
   header, .form-section, .queue-list-section, .admin-bar, .ticket-actions { display: none; }
   .ticket-section { display: flex !important; }

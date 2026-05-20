@@ -114,7 +114,16 @@
             Scan QR di bawah menggunakan aplikasi GoPay / QRIS
           </p>
           <div class="payment-qr-wrap">
-            <img id="paymentQRImage" src="" alt="QR Code Pembayaran" />
+            <div id="paymentQRLoading" class="qr-loading">
+              <div class="qr-spinner"></div>
+              <span>Membuat QR Pembayaran…</span>
+            </div>
+            <img
+              id="paymentQRImage"
+              src=""
+              alt="QR Code Pembayaran"
+              style="display: none"
+            />
           </div>
           <p class="payment-note">
             Setelah pembayaran berhasil, klik tombol di bawah untuk mendapatkan
@@ -299,49 +308,33 @@
       <div class="pin-modal">
         <div class="pin-title">🔐 Buka Panel Admin</div>
         <div class="pin-subtitle">
-          Selesaikan pembayaran untuk membuka panel
+          Bayar atau masukkan PIN untuk membuka panel
         </div>
 
-        <!-- GoPay QR (primary) -->
+        <!-- GoPay QR -->
         <div class="admin-pay-amount" id="adminPayAmount">Rp 5.000</div>
         <div class="admin-qr-wrap">
-          <img id="adminQRImage" src="" alt="QR Pembayaran Admin" />
+          <img id="adminQRImage" src="" alt="QR Pembayaran" />
         </div>
-        <p class="admin-qr-note">Scan QR di atas lalu klik konfirmasi</p>
+
+        <!-- PIN input (always visible) -->
+        <div class="pin-label">Masukkan PIN Admin</div>
+        <input
+          class="pin-input"
+          id="pinInput"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••"
+          onkeydown="if (event.key === 'Enter') submitPin();"
+        />
+        <div class="pin-error" id="pinError"></div>
 
         <div class="pin-actions">
           <button class="btn btn-outline" onclick="closePinModal()">
             Batal
           </button>
-          <button class="btn btn-primary" onclick="confirmAdminPayment()">
-            ✓ Sudah Bayar – Buka Panel
-          </button>
-        </div>
-
-        <!-- Emergency PIN fallback (hidden) -->
-        <div class="pin-fallback">
-          <button class="pin-fallback-link" onclick="togglePinFallback()">
-            Gunakan PIN →
-          </button>
-        </div>
-        <div id="pinFallbackSection" style="display: none">
-          <input
-            class="pin-input"
-            id="pinInput"
-            type="password"
-            inputmode="numeric"
-            maxlength="6"
-            placeholder="••••"
-            onkeydown="if (event.key === 'Enter') submitPin();"
-          />
-          <div class="pin-error" id="pinError"></div>
-          <button
-            class="btn btn-primary"
-            style="margin-top: 8px; width: 100%"
-            onclick="submitPin()"
-          >
-            Masuk dengan PIN
-          </button>
+          <button class="btn btn-primary" onclick="submitPin()">Masuk</button>
         </div>
       </div>
     </div>

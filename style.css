@@ -528,6 +528,29 @@ main {
   border-radius: 8px;
 }
 
+.qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--gray-500, #6b7280);
+  font-size: .875rem;
+}
+
+.qr-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gray-200, #e5e7eb);
+  border-top-color: var(--primary, #2563eb);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .payment-note {
   font-size: .8rem;
   color: var(--gray-500, #6b7280);
@@ -561,6 +584,21 @@ main {
 
 .pin-title    { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
 .pin-subtitle { font-size: .875rem; color: var(--gray-600); margin-bottom: 20px; }
+
+.pin-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin: 14px 0 6px;
+  text-align: left;
+}
+
+.admin-pay-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 4px 0 10px;
+}
 
 .pin-input {
   width: 100%;

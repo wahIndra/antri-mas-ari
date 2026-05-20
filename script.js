@@ -98,7 +98,7 @@ function isValidPhone(p) {
   return /^(\+62|62|0)[0-9][\d\s\-]{6,13}$/.test(p);
 }
 
-function requestQueue() {
+async function requestQueue() {
   var name = document.getElementById("patientName").value.trim() || "Tamu";
   var phone = document.getElementById("patientPhone").value.trim();
   if (phone && !isValidPhone(phone)) {
@@ -106,15 +106,54 @@ function requestQueue() {
     document.getElementById("patientPhone").focus();
     return;
   }
-  if (currentPaymentQRUrl) {
+  if (currentPaymentAmount > 0) {
     pendingName = name;
     pendingPhone = phone;
-    document.getElementById("paymentQRImage").src = currentPaymentQRUrl;
-    // Update amount display (merchant number hidden from users)
+    // Show payment section immediately with loading state
+    var qrImg = document.getElementById("paymentQRImage");
+    var qrLoading = document.getElementById("paymentQRLoading");
+    qrImg.style.display = "none";
+    qrImg.src = "";
+    qrLoading.style.display = "flex";
     var fmt = currentPaymentAmount.toLocaleString("id-ID");
     document.getElementById("paymentAmountDisplay").textContent = "Rp " + fmt;
     document.getElementById("formSection").style.display = "none";
     document.getElementById("paymentSection").style.display = "flex";
+    // Generate dynamic Midtrans QRIS
+    try {
+      var resp = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gross_amount: currentPaymentAmount,
+          customer_name: name,
+          customer_phone: phone,
+        }),
+      });
+      var data = await resp.json();
+      var qrSrc = null;
+      if (data.qr_string) {
+        // Render QR from raw QRIS string via qrserver.com
+        qrSrc =
+          "https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=" +
+          encodeURIComponent(data.qr_string);
+      } else if (data.qr_url) {
+        qrSrc = data.qr_url;
+      }
+      if (qrSrc) {
+        qrImg.src = qrSrc;
+        qrImg.style.display = "";
+        qrLoading.style.display = "none";
+      } else {
+        throw new Error(data.error || "No QR returned");
+      }
+    } catch (e) {
+      // Fallback to static merchant QR
+      qrImg.src = currentPaymentQRUrl;
+      qrImg.style.display = "";
+      qrLoading.style.display = "none";
+      showToast("QR statis digunakan (dynamic QR gagal)", "");
+    }
   } else {
     takeQueue(name, phone);
   }
@@ -238,13 +277,15 @@ function printTicket() {
 function openPinModal() {
   document.getElementById("pinInput").value = "";
   document.getElementById("pinError").textContent = "";
-  document.getElementById("pinFallbackSection").style.display = "none";
   // Show the merchant-provided GoPay QR image + amount
   document.getElementById("adminQRImage").src =
     currentPaymentQRUrl || "QRANTRI.jpg";
   document.getElementById("adminPayAmount").textContent =
     "Rp " + currentPaymentAmount.toLocaleString("id-ID");
   document.getElementById("pinOverlay").classList.add("open");
+  setTimeout(function () {
+    document.getElementById("pinInput").focus();
+  }, 100);
 }
 
 function closePinModal(e) {

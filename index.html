@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Antrian – Mas Ari (QA Lead)</title>
+    <title>Aplikasi Antrian</title>
     <link rel="stylesheet" href="style.css" />
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -13,18 +13,33 @@
     <!-- Header -->
     <header>
       <div class="header-inner">
-        <div class="header-icon">👨‍💻</div>
+        <button
+          id="backBtn"
+          class="btn-back"
+          onclick="backToQueueSelect()"
+          style="display: none"
+        >
+          ← Semua
+        </button>
+        <div class="header-icon" id="headerAvatar">🎫</div>
         <div>
-          <h1 id="headerTitle">Antrian Konsultasi QA</h1>
+          <h1 id="headerTitle">Pilih Antrian</h1>
           <p>
             Ambil nomor antrian untuk bertemu
-            <strong id="headerSubtitle">Mas Ari – QA Lead</strong>
+            <strong id="headerSubtitle">layanan yang Anda butuhkan</strong>
           </p>
         </div>
       </div>
     </header>
 
-    <main>
+    <!-- Queue Selection Screen -->
+    <section id="queueSelectSection" class="queue-select-section">
+      <div id="queueCards" class="queue-cards-grid">
+        <div class="queue-loading">Memuat daftar antrian…</div>
+      </div>
+    </section>
+
+    <main id="queueView" style="display: none">
       <!-- Status Panel -->
       <section class="status-panel">
         <div class="status-card current">
@@ -191,16 +206,30 @@
       <section class="queue-list-section">
         <h2>Daftar Antrian</h2>
         <div class="tabs">
-          <button class="tab active" onclick="switchTab(this, 'all')">
+          <button
+            class="tab active"
+            data-tab="all"
+            onclick="switchTab(this, 'all')"
+          >
             Semua
           </button>
-          <button class="tab" onclick="switchTab(this, 'waiting')">
+          <button
+            class="tab"
+            data-tab="waiting"
+            onclick="switchTab(this, 'waiting')"
+          >
             Menunggu
           </button>
-          <button class="tab" onclick="switchTab(this, 'serving')">
+          <button
+            class="tab"
+            data-tab="serving"
+            onclick="switchTab(this, 'serving')"
+          >
             Dipanggil
           </button>
-          <button class="tab" onclick="switchTab(this, 'done')">Selesai</button>
+          <button class="tab" data-tab="done" onclick="switchTab(this, 'done')">
+            Selesai
+          </button>
         </div>
         <div class="queue-table-wrapper">
           <table class="queue-table">
@@ -223,16 +252,33 @@
       </section>
     </main>
 
-    <!-- Settings Modal -->
+    <!-- Queue Settings / Add-Edit Modal -->
     <div
       class="pin-overlay"
       id="settingsOverlay"
       onclick="closeSettingsModal(event)"
     >
       <div class="pin-modal" style="max-width: 420px">
-        <div class="pin-title">⚙️ Pengaturan Panel</div>
-        <div class="pin-subtitle">Sesuaikan tampilan aplikasi</div>
+        <input type="hidden" id="settingsDefId" />
+        <div class="pin-title" id="settingsModalTitle">
+          ⚙️ Pengaturan Antrian
+        </div>
+        <div class="pin-subtitle">Isi detail antrian ini</div>
         <div class="settings-fields">
+          <label>Nama Antrian (tampil di kartu)</label>
+          <input
+            type="text"
+            id="setQueueName"
+            maxlength="50"
+            placeholder="Mas Ari QA Lead"
+          />
+          <label>Avatar / Emoji</label>
+          <input
+            type="text"
+            id="setQueueAvatar"
+            maxlength="8"
+            placeholder="🎫"
+          />
           <label>Judul Header</label>
           <input
             type="text"
@@ -240,21 +286,21 @@
             maxlength="60"
             placeholder="Antrian Konsultasi QA"
           />
-          <label>Subtitle (nama &amp; jabatan)</label>
+          <label>Subtitle Header</label>
           <input
             type="text"
             id="setHeaderSubtitle"
             maxlength="60"
             placeholder="Mas Ari – QA Lead"
           />
-          <label>Nama di Kartu Profil</label>
+          <label>Nama (kartu profil)</label>
           <input
             type="text"
             id="setProfileName"
             maxlength="40"
             placeholder="Mas Ari"
           />
-          <label>Jabatan di Kartu Profil</label>
+          <label>Jabatan (kartu profil)</label>
           <input
             type="text"
             id="setProfileTitle"
@@ -266,33 +312,39 @@
             type="text"
             id="setServiceName"
             maxlength="60"
-            placeholder="Konsultasi QA – Mas Ari"
+            placeholder="Konsultasi QA"
           />
-          <label
-            >Nomor Merchant (internal, tidak ditampilkan ke pengguna)</label
-          >
+          <label>Nomor Merchant (internal)</label>
           <input
             type="tel"
             id="setPaymentMerchant"
             maxlength="20"
             placeholder="085349494794"
           />
-          <label>Nominal Pembayaran — ditampilkan di layar (Rp)</label>
+          <label>Nominal Pembayaran (Rp, 0 = gratis)</label>
           <input
             type="number"
             id="setPaymentAmount"
             min="0"
             placeholder="5000"
           />
-          <label>Gambar QR dari GoPay Merchant (path atau URL)</label>
+          <label>Gambar QR GoPay (path atau URL)</label>
           <input
             type="text"
             id="setPaymentQR"
             maxlength="500"
-            placeholder="QRANTRI.jpg atau https://..."
+            placeholder="QRANTRI.jpg"
           />
         </div>
         <div class="pin-actions">
+          <button
+            class="btn btn-danger"
+            id="settingsDeleteBtn"
+            onclick="deleteQueueDef()"
+            style="display: none"
+          >
+            🗑 Hapus
+          </button>
           <button class="btn btn-outline" onclick="closeSettingsModal()">
             Batal
           </button>
@@ -342,27 +394,32 @@
     <!-- Admin Panel (bottom fixed bar) -->
     <div class="admin-bar">
       <div class="admin-inner" id="adminLocked">
-        <span class="admin-label">Panel Mas Ari</span>
+        <span class="admin-label" id="adminLabelLocked">Panel Admin</span>
         <button class="btn btn-outline-light" onclick="openPinModal()">
           🔒 Buka Panel
         </button>
       </div>
       <div class="admin-inner" id="adminUnlockedBar" style="display: none">
-        <span class="admin-label">Panel Mas Ari</span>
-        <button class="btn btn-success" onclick="callNext()">
-          ▶ Panggil Berikutnya
-        </button>
+        <span class="admin-label" id="adminLabelUnlocked">Panel Admin</span>
+        <button class="btn btn-success" onclick="callNext()">▶ Panggil</button>
         <button class="btn btn-primary" onclick="finishCurrent()">
-          ✓ Selesaikan
+          ✓ Selesai
         </button>
         <button class="btn btn-warning" onclick="recallCurrent()">
-          🔔 Panggil Ulang
+          🔔 Ulang
         </button>
         <button class="btn btn-outline-light" onclick="resetQueue()">
-          ↺ Reset Antrian
+          ↺ Reset
         </button>
         <button class="btn btn-outline-light" onclick="openSettingsModal()">
           ⚙️
+        </button>
+        <button
+          class="btn btn-outline-light"
+          onclick="backToQueueSelect()"
+          title="Ganti Antrian"
+        >
+          🔄
         </button>
         <button class="btn btn-outline-light" onclick="lockAdmin()">🔒</button>
       </div>

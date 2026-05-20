@@ -1,7 +1,6 @@
 // Vercel Serverless Function – Admin PIN verification
 // Env var required in Vercel dashboard:
-//   ADMIN_PIN  → your admin PIN (e.g. 1357)
-//
+//   ADMIN_PIN  → your admin PIN
 // PIN comparison is done server-side (never sent to the browser)
 // and uses timing-safe comparison to prevent timing attacks.
 

@@ -698,3 +698,47 @@ main {
   body { background: white; }
 }
 
+/* ── Queue Selection Screen ─────────────────────────────────── */
+.queue-select-section { padding: 16px; }
+.queue-cards-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 8px 0; }
+.queue-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  min-width: 180px;
+  max-width: 260px;
+  flex: 1;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.queue-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+.queue-card-avatar { font-size: 3rem; margin-bottom: 10px; }
+.queue-card-name { font-size: 1.1rem; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+.queue-card-sub { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 6px; }
+.queue-card-payment {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: #eff6ff;
+  padding: 4px 10px;
+  border-radius: 99px;
+  display: inline-block;
+  margin-top: 6px;
+}
+.queue-card-add { border: 2px dashed var(--gray-300); background: var(--gray-50); color: var(--gray-500); }
+.queue-card-add:hover { border-color: var(--primary); color: var(--primary); }
+.queue-empty { text-align: center; color: var(--gray-500); padding: 40px 20px; }
+.queue-loading { color: var(--gray-400); text-align: center; padding: 32px; }
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-right: 12px;
+  font-weight: 600;
+}
+

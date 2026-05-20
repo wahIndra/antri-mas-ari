@@ -460,13 +460,33 @@ function checkMyTicketStatus() {
   var entry = Object.values(liveState.queues || {}).find(function (q) {
     return q.id === myTicket.id;
   });
-  if (!entry) return;
+
+  // Ticket removed (e.g. after reset) — clear display
+  if (!entry) {
+    saveMyTicket(null);
+    document.getElementById("ticketSection").style.display = "none";
+    document.getElementById("formSection").style.display = "block";
+    document.getElementById("patientName").value = "";
+    return;
+  }
+
   if (entry.status !== myTicket.status) {
     saveMyTicket(Object.assign({}, myTicket, { status: entry.status }));
     if (entry.status === "serving") {
-      showToast("Nomor " + entry.id + " – Anda sedang dipanggil!", "success");
+      showToast(
+        "Nomor " + entry.id + " \u2013 Anda sedang dipanggil!",
+        "success",
+      );
       playBeep();
       playBeep();
+    }
+    if (entry.status === "done") {
+      showToast("Konsultasi Anda selesai. Terima kasih!", "success");
+      saveMyTicket(null);
+      document.getElementById("ticketSection").style.display = "none";
+      document.getElementById("formSection").style.display = "block";
+      document.getElementById("patientName").value = "";
+      return;
     }
   }
   if (document.getElementById("ticketSection").style.display !== "none") {

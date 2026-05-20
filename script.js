@@ -327,13 +327,16 @@ async function submitPin() {
       document.getElementById("adminLocked").style.display = "none";
       document.getElementById("adminUnlockedBar").style.display = "flex";
       showToast("Panel berhasil dibuka.", "success");
+    } else if (resp.status === 500) {
+      errEl.textContent =
+        "Server belum dikonfigurasi – tambahkan ADMIN_PIN di Vercel lalu redeploy.";
     } else {
       errEl.textContent = "PIN salah, coba lagi.";
       document.getElementById("pinInput").value = "";
       document.getElementById("pinInput").focus();
     }
   } catch (e) {
-    errEl.textContent = "Gagal memverifikasi, coba lagi.";
+    errEl.textContent = "Gagal terhubung ke server, coba lagi.";
   }
 }
 

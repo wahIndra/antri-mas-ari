@@ -1,11 +1,38 @@
-// Vercel Serverless Function – Midtrans QRIS (Production)
-// Env vars required in Vercel dashboard:
-//   MIDTRANS_SERVER_KEY  → your Midtrans Production Server Key (SB-Mid-server-... or Mid-server-...)
-// Optional:
-//   MIDTRANS_PAYMENT_AMOUNT  → fixed amount in IDR (e.g. 5000); if set, client value is ignored
+// Vercel Serverless Function - Midtrans QRIS
+// Uses Node built-in https (works on all Node versions, no fetch needed)
+// Env vars: MIDTRANS_SERVER_KEY (required), MIDTRANS_PAYMENT_AMOUNT (optional)
+
+const https = require("https");
+
+function httpPost(hostname, path, headers, body) {
+  return new Promise(function (resolve, reject) {
+    const data = JSON.stringify(body);
+    const options = {
+      hostname: hostname,
+      path: path,
+      method: "POST",
+      headers: Object.assign({}, headers, {
+        "Content-Length": Buffer.byteLength(data),
+      }),
+    };
+    const req = https.request(options, function (res) {
+      let raw = "";
+      res.on("data", function (chunk) { raw += chunk; });
+      res.on("end", function () {
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(raw) });
+        } catch (e) {
+          reject(new Error("Non-JSON from Midtrans: " + raw.slice(0, 200)));
+        }
+      });
+    });
+    req.on("error", reject);
+    req.write(data);
+    req.end();
+  });
+}
 
 module.exports = async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -15,72 +42,48 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: "Payment gateway not configured" });
   }
 
-  const { gross_amount, customer_name, customer_phone } = req.body || {};
-
-  // Amount: prefer env var (admin-controlled), fallback to client value (min 1000 IDR)
+  const body = req.body || {};
   const envAmount = process.env.MIDTRANS_PAYMENT_AMOUNT
     ? parseInt(process.env.MIDTRANS_PAYMENT_AMOUNT, 10)
     : null;
   const amount =
     envAmount && envAmount > 0
       ? envAmount
-      : Math.max(1000, Math.round(Number(gross_amount) || 5000));
+      : Math.max(1000, Math.round(Number(body.gross_amount) || 5000));
 
-  // Sanitise customer details (length-limited, no HTML)
-  const name = String(customer_name || "Tamu")
-    .replace(/[<>]/g, "")
-    .slice(0, 50);
-  const phone = String(customer_phone || "")
-    .replace(/[^0-9+\-\s]/g, "")
-    .slice(0, 20);
-
-  // Unique order ID
-  const orderId =
-    "ANTRI-" +
-    Date.now() +
-    "-" +
-    Math.random().toString(36).slice(2, 7).toUpperCase();
-
+  const name = String(body.customer_name || "Tamu").replace(/[<>]/g, "").slice(0, 50);
+  const phone = String(body.customer_phone || "").replace(/[^0-9+\-\s]/g, "").slice(0, 20);
+  const orderId = "ANTRI-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
   const auth = Buffer.from(serverKey + ":").toString("base64");
+  const hostname = serverKey.startsWith("SB-")
+    ? "api.sandbox.midtrans.com"
+    : "api.midtrans.com";
 
-  // Auto-detect environment from key prefix (SB- = Sandbox)
-  const isSandbox = serverKey.startsWith("SB-");
-  const baseUrl = isSandbox
-    ? "https://api.sandbox.midtrans.com"
-    : "https://api.midtrans.com";
+  const payload = {
     payment_type: "qris",
-    transaction_details: {
-      order_id: orderId,
-      gross_amount: amount,
-    },
+    transaction_details: { order_id: orderId, gross_amount: amount },
     qris: { acquirer: "gopay" },
-    customer_details: {
-      first_name: name,
-      phone: phone,
-    },
+    customer_details: { first_name: name, phone: phone },
   };
 
   try {
-    const resp = await fetch(baseUrl + "/v2/charge", {
-      method: "POST",
-      headers: {
+    const result = await httpPost(
+      hostname,
+      "/v2/charge",
+      {
         "Content-Type": "application/json",
         Authorization: "Basic " + auth,
         Accept: "application/json",
       },
-      body: JSON.stringify(payload),
-    });
+      payload
+    );
 
-    const data = await resp.json();
+    const data = result.body;
 
     if (data.status_code === "201") {
-      // Find QR image URL from actions array
-      const qrAction =
-        data.actions &&
-        data.actions.find(function (a) {
-          return a.rel === "generate-qr-code";
-        });
-
+      const qrAction = data.actions && data.actions.find(function (a) {
+        return a.rel === "generate-qr-code";
+      });
       return res.status(200).json({
         order_id: data.order_id,
         qr_url: qrAction ? qrAction.url : null,
@@ -89,13 +92,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Midtrans returned an error — pass full details back for debugging
     return res.status(400).json({
       error: data.status_message || "Gagal membuat pembayaran",
       midtrans_status_code: data.status_code,
-      midtrans_status_message: data.status_message,
     });
   } catch (err) {
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: err.message || "Server error" });
   }
 };

@@ -57,22 +57,76 @@
               <span>Waktu Ambil</span>
               <span id="ticketTime">-</span>
             </div>
+            <div class="ticket-row" id="ticketPhoneRow" style="display: none">
+              <span>No. HP</span>
+              <span id="ticketPhone">-</span>
+            </div>
             <div class="ticket-row">
               <span>Estimasi Tunggu</span>
               <span id="ticketEstimate">-</span>
             </div>
           </div>
-          <div class="ticket-note">
+          <div class="ticket-note" id="ticketNote">
             Harap tunggu hingga nomor Anda dipanggil
           </div>
-          <div class="ticket-actions">
+          <div
+            class="ticket-done-banner"
+            id="ticketDoneBanner"
+            style="display: none"
+          >
+            <div class="done-checkmark">✓</div>
+            <p>
+              Layanan Anda telah selesai.<br />Terima kasih sudah menggunakan
+              layanan ini!
+            </p>
+            <button class="btn btn-primary btn-large" onclick="newQueue()">
+              🔄 Ambil Nomor Antrian Baru
+            </button>
+          </div>
+          <div class="ticket-actions" id="ticketActions">
             <button class="btn btn-outline" onclick="printTicket()">
               🖨️ Cetak Tiket
             </button>
-            <button class="btn btn-danger" onclick="cancelTicket()">
+            <button
+              class="btn btn-danger"
+              id="ticketCancelBtn"
+              onclick="cancelTicket()"
+            >
               ✕ Batalkan
             </button>
           </div>
+        </div>
+      </section>
+
+      <!-- Payment Section -->
+      <section
+        class="payment-section"
+        id="paymentSection"
+        style="display: none"
+      >
+        <div class="payment-card">
+          <div class="payment-badge">💳 Pembayaran</div>
+          <h2 id="paymentTitle">Scan untuk Membayar</h2>
+          <p class="payment-desc">
+            Scan QR code di bawah menggunakan aplikasi pembayaran Anda
+          </p>
+          <div class="payment-qr-wrap">
+            <img id="paymentQRImage" src="" alt="QR Code Pembayaran" />
+          </div>
+          <p class="payment-note">
+            Setelah pembayaran berhasil, klik tombol di bawah untuk mendapatkan
+            nomor antrian
+          </p>
+          <button class="btn btn-primary btn-large" onclick="confirmPayment()">
+            ✓ Sudah Bayar – Ambil Nomor
+          </button>
+          <button
+            class="btn btn-outline btn-large"
+            style="margin-top: 10px"
+            onclick="cancelPayment()"
+          >
+            ← Batal
+          </button>
         </div>
       </section>
 
@@ -100,11 +154,22 @@
             maxlength="50"
           />
         </div>
+        <div class="name-input-group">
+          <label for="patientPhone"
+            >No. HP <span class="optional-tag">(opsional)</span></label
+          >
+          <input
+            type="tel"
+            id="patientPhone"
+            placeholder="08xx-xxxx-xxxx"
+            maxlength="20"
+          />
+        </div>
 
         <button
           class="btn btn-primary btn-large"
           id="takeBtn"
-          onclick="takeQueue()"
+          onclick="requestQueue()"
         >
           Ambil Nomor Antrian
         </button>
@@ -131,13 +196,14 @@
               <tr>
                 <th>No. Antrian</th>
                 <th>Nama</th>
+                <th>Telepon</th>
                 <th>Waktu</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody id="queueTableBody">
               <tr class="empty-row">
-                <td colspan="4">Belum ada antrian hari ini</td>
+                <td colspan="5">Belum ada antrian hari ini</td>
               </tr>
             </tbody>
           </table>
@@ -190,6 +256,13 @@
             maxlength="60"
             placeholder="Konsultasi QA – Mas Ari"
           />
+          <label>Gambar QR Pembayaran</label>
+          <input
+            type="text"
+            id="setPaymentQR"
+            maxlength="500"
+            placeholder="QRANTRI.jpg atau https://... (kosongkan jika tidak pakai)"
+          />
         </div>
         <div class="pin-actions">
           <button class="btn btn-outline" onclick="closeSettingsModal()">
@@ -206,7 +279,7 @@
     <div class="pin-overlay" id="pinOverlay" onclick="closePinModal(event)">
       <div class="pin-modal">
         <div class="pin-title">🔐 Panel Admin</div>
-        <div class="pin-subtitle">Masukkan PIN untuk melanjutkan</div>
+        <div class="pin-subtitle">Masukkan PIN atau scan QR di bawah</div>
         <input
           class="pin-input"
           id="pinInput"
@@ -223,6 +296,13 @@
           </button>
           <button class="btn btn-primary" onclick="submitPin()">Masuk</button>
         </div>
+        <div class="admin-qr-divider"><span>atau buka dengan QR</span></div>
+        <div class="admin-qr-wrap">
+          <img id="adminQRImage" src="" alt="QR Admin" />
+          <p class="admin-qr-note">
+            Scan QR ini dari HP untuk buka panel admin
+          </p>
+        </div>
       </div>
     </div>
 
@@ -238,6 +318,9 @@
         <span class="admin-label">Panel Mas Ari</span>
         <button class="btn btn-success" onclick="callNext()">
           ▶ Panggil Berikutnya
+        </button>
+        <button class="btn btn-primary" onclick="finishCurrent()">
+          ✓ Selesaikan
         </button>
         <button class="btn btn-warning" onclick="recallCurrent()">
           🔔 Panggil Ulang

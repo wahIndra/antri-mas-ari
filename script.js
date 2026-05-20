@@ -26,6 +26,9 @@ let liveState = null;
 let currentTab = "all";
 let adminUnlocked = false;
 let currentServiceName = FIXED_SERVICE.name;
+let currentPaymentQRUrl = "";
+let pendingName = "";
+let pendingPhone = "";
 
 function getToday() {
   return new Date().toLocaleDateString("id-ID", {
@@ -86,8 +89,47 @@ function saveMyTicket(t) {
 }
 
 // ===== Take Queue =====
-function takeQueue() {
+function isValidPhone(p) {
+  // Optional field — empty is always fine
+  if (!p) return true;
+  // Accept: starts with 08, +62, or 62; 8-15 digits; spaces/dashes allowed
+  return /^(\+62|62|0)[0-9][\d\s\-]{6,13}$/.test(p);
+}
+
+function requestQueue() {
   var name = document.getElementById("patientName").value.trim() || "Tamu";
+  var phone = document.getElementById("patientPhone").value.trim();
+  if (phone && !isValidPhone(phone)) {
+    showToast("Nomor HP tidak valid. Contoh: 0812-3456-7890", "error");
+    document.getElementById("patientPhone").focus();
+    return;
+  }
+  if (currentPaymentQRUrl) {
+    pendingName = name;
+    pendingPhone = phone;
+    document.getElementById("paymentQRImage").src = currentPaymentQRUrl;
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("paymentSection").style.display = "flex";
+  } else {
+    takeQueue(name, phone);
+  }
+}
+
+function confirmPayment() {
+  document.getElementById("paymentSection").style.display = "none";
+  takeQueue(pendingName, pendingPhone);
+  pendingName = "";
+  pendingPhone = "";
+}
+
+function cancelPayment() {
+  pendingName = "";
+  pendingPhone = "";
+  document.getElementById("paymentSection").style.display = "none";
+  document.getElementById("formSection").style.display = "block";
+}
+
+function takeQueue(name, phone) {
   var counterRef = db.ref(ROOT + "/counters/A");
 
   counterRef
@@ -95,13 +137,18 @@ function takeQueue() {
       return (cur || 0) + 1;
     })
     .then(function (res) {
+      if (!res.committed) {
+        showToast("Gagal mengambil nomor, coba lagi.", "error");
+        return;
+      }
       var num = String(res.snapshot.val()).padStart(3, "0");
       var queueNumber = "A" + num;
       var now = new Date().toISOString();
       var entry = {
         id: queueNumber,
         name: name,
-        service: FIXED_SERVICE.name,
+        phone: phone || "",
+        service: currentServiceName,
         prefix: FIXED_SERVICE.prefix,
         takenAt: now,
         status: "waiting",
@@ -128,11 +175,32 @@ function showTicket(entry) {
   var wb = queues.filter(function (q) {
     return q.status === "waiting" && q.takenAt < entry.takenAt;
   }).length;
+  // Reset done state
+  document.getElementById("ticketDoneBanner").style.display = "none";
+  document.getElementById("ticketNote").style.display = "";
+  document.getElementById("ticketActions").style.display = "";
+  document.getElementById("ticketCancelBtn").style.display = "";
+  // Phone row
+  var phoneRow = document.getElementById("ticketPhoneRow");
+  var phoneEl = document.getElementById("ticketPhone");
+  if (entry.phone) {
+    phoneEl.textContent = entry.phone;
+    phoneRow.style.display = "";
+  } else {
+    phoneRow.style.display = "none";
+  }
   document.getElementById("ticketSection").style.display = "flex";
   document.getElementById("ticketNumber").textContent = entry.id;
   document.getElementById("ticketService").textContent = entry.service;
   document.getElementById("ticketTime").textContent = formatTime(entry.takenAt);
   document.getElementById("ticketEstimate").textContent = estimateWait(wb);
+}
+
+function newQueue() {
+  document.getElementById("ticketSection").style.display = "none";
+  document.getElementById("formSection").style.display = "block";
+  document.getElementById("patientName").value = "";
+  document.getElementById("patientPhone").value = "";
 }
 
 function cancelTicket() {
@@ -165,6 +233,7 @@ function printTicket() {
 function openPinModal() {
   document.getElementById("pinInput").value = "";
   document.getElementById("pinError").textContent = "";
+  document.getElementById("adminQRImage").src = "QRANTRI.jpg";
   document.getElementById("pinOverlay").classList.add("open");
   setTimeout(function () {
     document.getElementById("pinInput").focus();
@@ -199,8 +268,15 @@ function lockAdmin() {
 
 // ===== Settings =====
 function applySettings(s) {
-  if (!s) return;
+  s = s || {};
   currentServiceName = s.serviceName || FIXED_SERVICE.name;
+  // Default to local QRANTRI.jpg; admin can override or clear in settings
+  currentPaymentQRUrl =
+    s.paymentQRUrl !== undefined &&
+    s.paymentQRUrl !== null &&
+    s.paymentQRUrl !== ""
+      ? s.paymentQRUrl
+      : "QRANTRI.jpg";
   var el;
   el = document.getElementById("headerTitle");
   if (el) el.textContent = s.headerTitle || "";
@@ -230,6 +306,7 @@ function openSettingsModal() {
       s.profileTitle || "QA Lead";
     document.getElementById("setServiceName").value =
       s.serviceName || currentServiceName;
+    document.getElementById("setPaymentQR").value = s.paymentQRUrl || "";
     document.getElementById("settingsOverlay").classList.add("open");
   });
 }
@@ -254,6 +331,7 @@ function saveSettings() {
     serviceName:
       document.getElementById("setServiceName").value.trim() ||
       currentServiceName,
+    paymentQRUrl: document.getElementById("setPaymentQR").value.trim(),
     pageTitle:
       document.getElementById("setHeaderTitle").value.trim() ||
       "Antrian Konsultasi QA",
@@ -330,6 +408,36 @@ function recallCurrent() {
   playBeep();
 }
 
+function finishCurrent() {
+  if (!adminUnlocked) {
+    openPinModal();
+    return;
+  }
+  if (
+    !liveState ||
+    !liveState.currentServing ||
+    !liveState.currentServing.fbKey
+  ) {
+    showToast("Tidak ada antrian yang sedang dilayani.", "warning");
+    return;
+  }
+  var cs = liveState.currentServing;
+  var updates = {};
+  updates[ROOT + "/queues/" + cs.fbKey + "/status"] = "done";
+  updates[ROOT + "/currentServing"] = null;
+  db.ref()
+    .update(updates)
+    .then(function () {
+      showToast(
+        "Nomor " + cs.id + " – " + cs.name + " selesai dilayani.",
+        "success",
+      );
+    })
+    .catch(function () {
+      showToast("Gagal menyelesaikan antrian.", "error");
+    });
+}
+
 function resetQueue() {
   if (!adminUnlocked) {
     openPinModal();
@@ -404,7 +512,7 @@ function renderQueueTable() {
   var tbody = document.getElementById("queueTableBody");
   if (!liveState) {
     tbody.innerHTML =
-      '<tr class="empty-row"><td colspan="4">Menghubungkan ke server...</td></tr>';
+      '<tr class="empty-row"><td colspan="5">Menghubungkan ke server...</td></tr>';
     return;
   }
   var rows = Object.entries(liveState.queues || {})
@@ -428,7 +536,7 @@ function renderQueueTable() {
     });
   if (rows.length === 0) {
     tbody.innerHTML =
-      '<tr class="empty-row"><td colspan="4">Tidak ada antrian</td></tr>';
+      '<tr class="empty-row"><td colspan="5">Tidak ada antrian</td></tr>';
     return;
   }
   var statusMap = {
@@ -439,11 +547,25 @@ function renderQueueTable() {
   };
   tbody.innerHTML = rows
     .map(function (q) {
+      var phoneCell =
+        adminUnlocked && q.phone
+          ? '<a href="tel:' +
+            escHtml(q.phone) +
+            '" class="phone-link">' +
+            escHtml(q.phone) +
+            "</a>"
+          : adminUnlocked
+            ? '<span class="no-phone">–</span>'
+            : q.phone
+              ? '<span class="no-phone">••••</span>'
+              : '<span class="no-phone">–</span>';
       return (
         '<tr><td class="ticket-num-cell">' +
         q.id +
         "</td><td>" +
         escHtml(q.name) +
+        "</td><td>" +
+        phoneCell +
         "</td><td>" +
         formatTime(q.takenAt) +
         "</td><td>" +
@@ -457,9 +579,12 @@ function renderQueueTable() {
 function checkMyTicketStatus() {
   var myTicket = getMyTicket();
   if (!myTicket || !liveState) return;
-  var entry = Object.values(liveState.queues || {}).find(function (q) {
-    return q.id === myTicket.id;
-  });
+  // Use fbKey for exact match — prevents stale ticket after reset/new A001 by someone else
+  var entry = myTicket.fbKey
+    ? (liveState.queues || {})[myTicket.fbKey]
+    : Object.values(liveState.queues || {}).find(function (q) {
+        return q.id === myTicket.id;
+      });
 
   // Ticket removed (e.g. after reset) — clear display
   if (!entry) {
@@ -467,6 +592,7 @@ function checkMyTicketStatus() {
     document.getElementById("ticketSection").style.display = "none";
     document.getElementById("formSection").style.display = "block";
     document.getElementById("patientName").value = "";
+    document.getElementById("patientPhone").value = "";
     return;
   }
 
@@ -483,9 +609,10 @@ function checkMyTicketStatus() {
     if (entry.status === "done") {
       showToast("Konsultasi Anda selesai. Terima kasih!", "success");
       saveMyTicket(null);
-      document.getElementById("ticketSection").style.display = "none";
-      document.getElementById("formSection").style.display = "block";
-      document.getElementById("patientName").value = "";
+      // Show done state on ticket instead of hiding it
+      document.getElementById("ticketNote").style.display = "none";
+      document.getElementById("ticketActions").style.display = "none";
+      document.getElementById("ticketDoneBanner").style.display = "block";
       return;
     }
   }
@@ -499,8 +626,23 @@ function checkMyTicketStatus() {
 }
 
 // ===== Bootstrap =====
+// Auto-unlock admin if URL contains valid ?adminKey=
+(function () {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("adminKey") === ADMIN_PIN) {
+      window.history.replaceState({}, "", window.location.pathname);
+      adminUnlocked = true;
+      document.getElementById("adminLocked").style.display = "none";
+      document.getElementById("adminUnlockedBar").style.display = "flex";
+      showToast("Panel admin dibuka via QR. 🔓", "success");
+    }
+  } catch (e) {
+    /* URLSearchParams not supported in very old browsers */
+  }
+})();
 document.getElementById("queueTableBody").innerHTML =
-  '<tr class="empty-row"><td colspan="4">Menghubungkan ke server...</td></tr>';
+  '<tr class="empty-row"><td colspan="5">Menghubungkan ke server...</td></tr>';
 
 // Load settings first, then queue data
 settingsRef.once("value").then(function (snap) {

@@ -154,6 +154,33 @@ main {
   margin-top: 16px;
 }
 
+/* ===== Ticket Done Banner ===== */
+.ticket-done-banner {
+  text-align: center;
+  padding: 16px 0 4px;
+  animation: popIn .35s ease;
+}
+
+.done-checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #059669;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.ticket-done-banner p {
+  font-size: .9rem;
+  color: var(--gray-600);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
 /* ===== Form Section ===== */
 .form-section {
   background: white;
@@ -196,7 +223,14 @@ main {
 
 /* ===== Name Input ===== */
 .name-input-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.optional-tag {
+  font-size: .75rem;
+  font-weight: 400;
+  color: var(--gray-400);
+  margin-left: 4px;
 }
 
 .name-input-group label {
@@ -357,6 +391,15 @@ main {
 
 .ticket-num-cell { font-weight: 700; color: var(--primary); font-size: .95rem; }
 
+.phone-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: .85rem;
+  white-space: nowrap;
+}
+.phone-link:hover { text-decoration: underline; }
+.no-phone { color: var(--gray-300); }
+
 /* ===== Admin Bar ===== */
 .admin-bar {
   position: fixed;
@@ -423,6 +466,60 @@ main {
   .btn { padding: 8px 12px; font-size: .82rem; }
 }
 
+/* ===== Payment Section ===== */
+.payment-section { display: flex; justify-content: center; }
+
+.payment-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  animation: popIn .35s ease;
+}
+
+.payment-badge {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: .8rem;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 99px;
+  letter-spacing: .05em;
+  margin-bottom: 12px;
+}
+
+.payment-card h2  { font-size: 1.2rem; margin-bottom: 6px; }
+.payment-desc     { font-size: .875rem; color: var(--gray-600); margin-bottom: 18px; }
+
+.payment-qr-wrap {
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.payment-qr-wrap img {
+  max-width: 240px;
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.payment-note {
+  font-size: .8rem;
+  color: var(--gray-500, #6b7280);
+  margin-bottom: 18px;
+  font-style: italic;
+}
+
 /* ===== PIN Modal ===== */
 .pin-overlay {
   position: fixed;
@@ -476,6 +573,40 @@ main {
   gap: 10px;
   margin-top: 16px;
   justify-content: center;
+}
+
+.admin-qr-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 14px;
+  color: var(--gray-400);
+  font-size: .78rem;
+}
+.admin-qr-divider::before,
+.admin-qr-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--gray-200);
+}
+
+.admin-qr-wrap {
+  text-align: center;
+}
+.admin-qr-wrap img {
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  border: 2px solid var(--gray-200);
+  display: block;
+  margin: 0 auto 8px;
+  background: var(--gray-100);
+}
+.admin-qr-note {
+  font-size: .75rem;
+  color: var(--gray-400);
+  margin: 0;
 }
 
 /* ===== Settings Fields ===== */

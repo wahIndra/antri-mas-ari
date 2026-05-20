@@ -43,7 +43,11 @@ module.exports = async function handler(req, res) {
 
   const auth = Buffer.from(serverKey + ":").toString("base64");
 
-  const payload = {
+  // Auto-detect environment from key prefix (SB- = Sandbox)
+  const isSandbox = serverKey.startsWith("SB-");
+  const baseUrl = isSandbox
+    ? "https://api.sandbox.midtrans.com"
+    : "https://api.midtrans.com";
     payment_type: "qris",
     transaction_details: {
       order_id: orderId,
@@ -57,7 +61,7 @@ module.exports = async function handler(req, res) {
   };
 
   try {
-    const resp = await fetch("https://api.midtrans.com/v2/charge", {
+    const resp = await fetch(baseUrl + "/v2/charge", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -85,9 +89,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Midtrans returned an error
+    // Midtrans returned an error — pass full details back for debugging
     return res.status(400).json({
       error: data.status_message || "Gagal membuat pembayaran",
+      midtrans_status_code: data.status_code,
+      midtrans_status_message: data.status_message,
     });
   } catch (err) {
     return res.status(500).json({ error: "Server error" });

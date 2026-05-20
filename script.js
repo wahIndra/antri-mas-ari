@@ -130,6 +130,9 @@ async function requestQueue() {
         }),
       });
       var data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.error || "API error " + resp.status);
+      }
       var qrSrc = null;
       if (data.qr_string) {
         // Render QR from raw QRIS string via qrserver.com
@@ -151,7 +154,7 @@ async function requestQueue() {
       qrImg.src = currentPaymentQRUrl;
       qrImg.style.display = "";
       qrLoading.style.display = "none";
-      showToast("QR statis digunakan (dynamic QR gagal)", "");
+      showToast("Dynamic QR gagal: " + e.message, "error");
     }
   } else {
     takeQueue(name, phone);
